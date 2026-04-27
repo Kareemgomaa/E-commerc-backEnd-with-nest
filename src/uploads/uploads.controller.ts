@@ -1,3 +1,4 @@
+/// <reference types="multer" />
 import { BadRequestException, Controller, Get, Param, Post, Req, Res, UploadedFile, UploadedFiles, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { diskStorage } from "multer";
@@ -12,7 +13,7 @@ export class uploadController {
             storage: diskStorage({
                 destination: './images',
                 filename: (req, file, cb) => {
-                    const prefix = `${Date.now()}-${Math.round(Math.random()) * 1e9}`
+                    const prefix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
                     const fileName = `${prefix}-${file.originalname}`
                     cb(null, fileName)
                 }

@@ -1,3 +1,4 @@
+/// <reference types="multer" />
 import { updateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Post, Put, Req, Res, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
