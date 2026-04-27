@@ -11,7 +11,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import type { Response } from "express";
 import { Request } from 'express';
-import { Multer } from 'multer';
 
 
 @Controller("api/users")
