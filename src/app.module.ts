@@ -28,6 +28,14 @@ import { MailModule } from './mail/mail.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         return {
+          // ⚠️ سجلات تصحيح مؤقتة - قم بإزالتها بعد حل المشكلة
+          // console.log('DB_HOST:', config.get<string>('DB_HOST'));
+          // console.log('DB_PORT:', config.get<number>('DB_PORT'));
+          // console.log('DB_USERNAME:', config.get<string>('DB_USERNAME'));
+          // console.log('DB_PASSWORD:', config.get('DB_PASSWORD') ? 'SET' : 'NOT SET');
+          // console.log('DB_DATABASE:', config.get<string>('DB_DATABASE'));
+          // console.log('DB_SSL:', config.get<string>('DB_SSL'));
+          // ⚠️ نهاية سجلات التصحيح المؤقتة
           type: 'postgres',
           host: config.get<string>('DB_HOST') || 'localhost',
           port: config.get<number>('DB_PORT') || 5432,
