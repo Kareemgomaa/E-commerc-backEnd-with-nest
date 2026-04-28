@@ -35,7 +35,7 @@ import { MailModule } from './mail/mail.module';
           database: config.get<string>('DB_DATABASE'),
           entities: [Product, User, Review],
           synchronize: true, // ✅ مؤقتاً لعمل الـ tables - ارجعه false بعدين
-          ssl: { rejectUnauthorized: false }, // ✅ SSL دايماً شغال
+          ssl: config.get<string>('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
         };
       },
     }),

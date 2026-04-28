@@ -12,6 +12,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import type { Response } from "express";
 import { Request } from 'express';
+import { v2 as cloudinary } from 'cloudinary';
+import { Readable } from 'stream';
 
 
 @Controller("api/users")
@@ -65,27 +67,27 @@ export class UsersController {
     @UseGuards(AuthRolesGuard)
     @Roles('admin', 'user')
     @UseInterceptors(FileInterceptor('users-image', {
-        storage: diskStorage({
-            destination: './images/users',
-            filename: (req, file, cb) => {
-                const prefix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-                const fileNam = `${prefix}-${file.originalname}`;
-                cb(null, fileNam);
-            }
-        }),
         fileFilter: (req, file, cb) => {
             if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
                 return cb(null, false);
             }
             cb(null, true);
         },
-        limits: {
-            fileSize: 1024 * 1024 * 2
-        }
+        limits: { fileSize: 1024 * 1024 * 2 }
     }))
-    public uploadImage(@Req() request: any, @UploadedFile() file: Express.Multer.File) {
-        if (!file) { throw new BadRequestException("No file to upload") }
-        return this.usersService.uploadImage(request.user.id, file.filename);
+    async uploadImage(@Req() request: any, @UploadedFile() file: Express.Multer.File) {
+        if (!file) throw new BadRequestException('No file to upload');
+
+        // رفع على cloudinary
+        const result = await new Promise((resolve, reject) => {
+            const upload = cloudinary.uploader.upload_stream(
+                { folder: 'users' },
+                (error, result) => error ? reject(error) : resolve(result)
+            );
+            Readable.from(file.buffer).pipe(upload);
+        }) as any;
+
+        return this.usersService.uploadImage(request.user.id, result.secure_url);
     }
     @Delete('/remove-profile-image')
     @UseGuards(AuthRolesGuard)
