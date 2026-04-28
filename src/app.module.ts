@@ -35,11 +35,11 @@ import { MailModule } from './mail/mail.module';
           database: config.get<string>('DB_DATABASE'),
           entities: [Product, User, Review],
           synchronize: process.env.NODE_ENV !== 'production',
-          ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
         };
       },
     }),
     MailModule,
+
   ],
   providers: [
     {
