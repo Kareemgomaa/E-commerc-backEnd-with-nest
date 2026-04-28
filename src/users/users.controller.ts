@@ -28,11 +28,10 @@ export class UsersController {
         return this.authServices.register(body)
     }
 
-    @Get("auth/login")
+    @Post("auth/login") // غيرها من Get لـ Post
     public login(@Body() body: LoginDto) {
         return this.authServices.login(body)
     }
-
 
     @Get("current-user")
     @UseGuards(AuthGuard)
