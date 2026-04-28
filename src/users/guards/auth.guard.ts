@@ -1,14 +1,17 @@
 import { JwtService } from '@nestjs/jwt';
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
+import { UsersService } from '../users.service'; // Assuming you might need UsersService for user lookup
 
 
 @Injectable()
 export class AuthGuard implements CanActivate {
     constructor(
         private readonly jwtService: JwtService,
-        private readonly configService: ConfigService
+        private readonly configService: ConfigService,
+        private usersService: UsersService // Assuming you might need UsersService
+
     ) { }
     async canActivate(context: ExecutionContext) {
         const request: Request = context.switchToHttp().getRequest();
@@ -20,8 +23,10 @@ export class AuthGuard implements CanActivate {
         const [type, token] = authHeader.split(' ');
         if (token && type === 'Bearer') {
             try {
+                const secret = this.configService.get('JWT_SECRET');
+                Logger.log(`AuthGuard JWT_SECRET: ${secret ? 'SET' : 'NOT SET'}`, 'AuthGuard'); // Debugging log
                 const payload = await this.jwtService.verifyAsync(token, {
-                    secret: this.configService.get<string>('JWT_SECRET'),
+                    secret: secret,
                 });
                 request['user'] = payload;
                 return true;

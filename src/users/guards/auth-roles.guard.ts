@@ -26,11 +26,14 @@ export class AuthRolesGuard implements CanActivate {
         if (!authHeader) {
             throw new UnauthorizedException('Authorization header is missing');
         }
+
         const [type, token] = authHeader.split(' ');
         if (token && type === 'Bearer') {
             try {
+                const secret = this.configService.get('JWT_SECRET');
+                console.log('AuthRolesGuard JWT_SECRET:', secret ? 'SET' : 'NOT SET', secret); // Debugging log
                 const payload = await this.jwtService.verifyAsync(token, {
-                    secret: this.configService.get<string>('JWT_SECRET'),
+                    secret: secret,
                 });
 
                 const user = await this.usersService.getCurrentUser(payload.id);
@@ -46,8 +49,8 @@ export class AuthRolesGuard implements CanActivate {
                 }
 
                 return roles.includes(user.userType);
-            } catch {
-                throw new UnauthorizedException('Invalid or expired token');
+            } catch (error) {
+                console.error('AuthRolesGuard token verification failed:', error); // Debugging log
             }
         }
         throw new UnauthorizedException('Invalid token format');
