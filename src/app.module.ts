@@ -21,6 +21,7 @@ import { MailModule } from './mail/mail.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+      ignoreEnvFile: process.env.NODE_ENV === 'production', // تجاهل ملف env في الإنتاج والاعتماد على متغيرات النظام
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
