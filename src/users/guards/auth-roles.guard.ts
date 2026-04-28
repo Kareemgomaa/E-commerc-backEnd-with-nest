@@ -5,7 +5,6 @@ import { Request } from 'express';
 import { Reflector } from '@nestjs/core';
 import { UsersService } from '../users.service';
 
-
 @Injectable()
 export class AuthRolesGuard implements CanActivate {
     constructor(
@@ -14,6 +13,7 @@ export class AuthRolesGuard implements CanActivate {
         private readonly reflector: Reflector,
         private readonly usersService: UsersService
     ) { }
+
     async canActivate(context: ExecutionContext) {
         const roles = this.reflector.getAllAndOverride<string[]>('roles', [
             context.getHandler(),
@@ -21,38 +21,49 @@ export class AuthRolesGuard implements CanActivate {
         ]);
 
         const request: Request = context.switchToHttp().getRequest();
-        const authHeader = request.headers.authorization;
+
+        const authHeader =
+            request.headers.authorization ||
+            (request.headers['x-access-token'] as string) ||
+            (request.headers['x-auth-token'] as string);
 
         if (!authHeader) {
             throw new UnauthorizedException('Authorization header is missing');
         }
 
-        const [type, token] = authHeader.split(' ');
-        if (token && type === 'Bearer') {
-            try {
-                const secret = this.configService.get('JWT_SECRET');
-                console.log('AuthRolesGuard JWT_SECRET:', secret ? 'SET' : 'NOT SET', secret); // Debugging log
-                const payload = await this.jwtService.verifyAsync(token, {
-                    secret: secret,
-                });
+        let token: string | undefined;
 
-                const user = await this.usersService.getCurrentUser(payload.id);
-                if (!user) {
-                    throw new UnauthorizedException('User not found');
-                }
-
-                request['user'] = user;
-
-                // If no roles are defined on the route, allow access to any authenticated user
-                if (!roles || roles.length === 0) {
-                    return true;
-                }
-
-                return roles.includes(user.userType);
-            } catch (error) {
-                console.error('AuthRolesGuard token verification failed:', error); // Debugging log
-            }
+        if (authHeader.startsWith('Bearer ')) {
+            token = authHeader.substring(7);
+        } else {
+            // fallback لو الـ proxy حذف كلمة Bearer
+            token = authHeader;
         }
-        throw new UnauthorizedException('Invalid token format');
+
+        if (!token) {
+            throw new UnauthorizedException('No token provided');
+        }
+
+        try {
+            const secret = this.configService.get<string>('JWT_SECRET');
+            const payload = await this.jwtService.verifyAsync(token, { secret });
+
+            const user = await this.usersService.getCurrentUser(payload.id);
+            if (!user) {
+                throw new UnauthorizedException('User not found');
+            }
+
+            request['user'] = user;
+
+            // لو مفيش roles محددة، أي user authenticated يعدي
+            if (!roles || roles.length === 0) {
+                return true;
+            }
+
+            return roles.includes(user.userType);
+        } catch (error) {
+            console.error('AuthRolesGuard error:', error);
+            throw new UnauthorizedException('Invalid or expired token');
+        }
     }
 }
