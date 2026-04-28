@@ -6,7 +6,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import * as bcrypt from "bcryptjs";
 import { updateUserDto } from "./dto/update-user.dto";
 import { join } from "node:path";
-import { unlinkSync } from "node:fs";
+import { existsSync, unlinkSync } from "node:fs";
 
 @Injectable()
 export class UsersService {
@@ -95,8 +95,15 @@ export class UsersService {
         })
         if (!user) { throw new NotFoundException("user not found") }
         if (user.profileImage === null) { throw new BadRequestException("no image to remove") }
-        const imagePath = join(process.cwd(), `./images/users/${user.profileImage}`);
-        unlinkSync(imagePath)
+
+        // التحقق ما إذا كانت الصورة مخزنة محلياً قبل محاولة حذفها
+        if (!user.profileImage.startsWith('http')) {
+            const imagePath = join(process.cwd(), `./images/users/${user.profileImage}`);
+            if (existsSync(imagePath)) {
+                unlinkSync(imagePath);
+            }
+        }
+
         user.profileImage = null
         return await this.usersRepository.save(user)
     }
