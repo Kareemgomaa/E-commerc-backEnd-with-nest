@@ -42,7 +42,7 @@ export class UsersController {
 
     @Get("all-users")
     @UseGuards(AuthRolesGuard)
-    @Roles('admin', 'user')
+    @Roles('admin')
     public getAllUsers() {
         return this.usersService.getAllUsers()
     }
