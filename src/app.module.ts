@@ -31,15 +31,15 @@ import { MailModule } from './mail/mail.module';
           host: config.get<string>('DB_HOST') || 'localhost',
           port: config.get<number>('DB_PORT') || 5432,
           username: config.get<string>('DB_USERNAME') || 'postgres',
-          password: config.get<string>('DB_PASSWORD') || '',
+          password: String(config.get('DB_PASSWORD') || ''),
           database: config.get<string>('DB_DATABASE'),
           entities: [Product, User, Review],
-          synchronize: process.env.NODE_ENV !== 'production',
+          synchronize: true, // ✅ مؤقتاً لعمل الـ tables - ارجعه false بعدين
+          ssl: { rejectUnauthorized: false }, // ✅ SSL دايماً شغال
         };
       },
     }),
     MailModule,
-
   ],
   providers: [
     {
@@ -48,6 +48,5 @@ import { MailModule } from './mail/mail.module';
     }
   ]
 })
-
 
 export class AppModule { }
