@@ -72,21 +72,18 @@ export class UsersService {
     }
 
     public async uploadImage(userId: number, newProfileImage: string) {
-        const user = await this.usersRepository.findOne({
-            where: { id: userId }
-        })
-        if (!user) {
-            throw new NotFoundException("user not found")
-        }
+        const user = await this.getCurrentUser(userId);
+
         if (user.profileImage) {
-            this.removeImage(userId)
-            user.profileImage = newProfileImage
-            return await this.usersRepository.save(user)
+            // حذف الصورة القديمة إذا كانت محلية
+            if (!user.profileImage.startsWith('http')) {
+                const imagePath = join(process.cwd(), `./images/users/${user.profileImage}`);
+                if (existsSync(imagePath)) unlinkSync(imagePath);
+            }
         }
-        user.profileImage = newProfileImage
-        return await this.usersRepository.save(user)
 
-
+        user.profileImage = newProfileImage;
+        return await this.usersRepository.save(user);
     }
 
     public async removeImage(userId: number) {

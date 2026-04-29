@@ -21,7 +21,7 @@ export class ProductsService {
         const [products, totalCount] = await this.productRepository.findAndCount({
             skip: skip,
             take: productPerPage,
-            relations: { user: true, reviews: true }
+            relations: ['reviews'] // تم حذف user لأنه eager: true في الـ Entity
         });
 
         if (skip >= totalCount && totalCount > 0) {
@@ -38,7 +38,7 @@ export class ProductsService {
     }
 
     public async getFilteredProducts(title: string) {
-        return await this.productRepository.find({ where: { title: Like(`%${title}%`) }, relations: { user: true, reviews: true } })
+        return await this.productRepository.find({ where: { title: Like(`%${title}%`) }, relations: ['reviews'] })
     }
 
     public async createProduct(dto: CreateProductDto, userId: number) {

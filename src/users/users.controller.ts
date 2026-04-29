@@ -94,11 +94,4 @@ export class UsersController {
     public removeImage(@Req() request: any) {
         return this.usersService.removeImage(request.user.id)
     }
-
-    @Get('show-image/:filepath')
-    @UseGuards(AuthRolesGuard)
-    @Roles('admin', 'user')
-    public async getProfileImage(@Req() request: any, @Param('filepath') filePath: string, @Res() res: Response) {
-        return this.usersService.getProfileImage(request.user.id, filePath, res)
-    }
 }
