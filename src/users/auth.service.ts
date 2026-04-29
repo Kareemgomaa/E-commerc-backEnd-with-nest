@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, RequestTimeoutException } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, RequestTimeoutException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "./users.entity";
 import { Repository } from "typeorm";
@@ -40,7 +40,8 @@ export class AuthServices {
         newUser = await this.usersRepository.save(newUser)
         const payload = { id: newUser.id, userType: newUser.userType };
         const token = await this.jwtservices.signAsync(payload);
-        const link = `http://localhost:3001/api/users/verify-email/${newUser.varificationToken}`;
+        const baseUrl = this.configService.get<string>('BASE_URL') || 'http://localhost:3001';
+        const link = `${baseUrl}/api/users/verify-email/${newUser.varificationToken}`;
         try {
             await this.mailService.sendMail({
                 to: newUser.email,
@@ -52,9 +53,10 @@ export class AuthServices {
                 }
 
             })
-        } catch (error) {
-            console.log(error);
-            throw new RequestTimeoutException();
+        } catch (mailError) {
+            // نسجل الخطأ في الـ Logs لنعرف السبب الحقيقي (Authentication failure, Port blocked, etc.)
+            console.error('Mail sending failed:', mailError);
+            // يفضل هنا عدم رمي Exception إذا أردت أن يكمل المستخدم عملية التسجيل بالرغم من فشل الإيميل
         }
         return { message: "user created successfully", accessToken: token, user: newUser }
     }
