@@ -24,6 +24,10 @@ export class User {
     @Column({ default: false })
     isAccountVerified!: boolean;
 
+    @Column({ type: 'varchar', nullable: true })
+    varificationToken!: string | null;
+
+
     @Column({ type: 'varchar', nullable: true, default: null })
     profileImage!: string | null;
 

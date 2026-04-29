@@ -8,6 +8,7 @@ import * as bcrypt from "bcryptjs";
 import { RegisterDto } from "./dto/create-user.dto";
 import { LoginDto } from "./dto/login.dto";
 import { MailerService } from "@nestjs-modules/mailer";
+import { randomBytes } from "crypto";
 
 @Injectable()
 export class AuthServices {
@@ -16,7 +17,8 @@ export class AuthServices {
         private readonly usersRepository: Repository<User>,
         private readonly jwtservices: JwtService,
         private readonly configService: ConfigService,
-        private readonly mailService: MailerService
+        private readonly mailService: MailerService,
+        private readonly config: ConfigService
     ) { }
 
     public async register(registerDto: RegisterDto) {
@@ -32,24 +34,56 @@ export class AuthServices {
             email,
             username,
             password: hashedPassword,
-            name
+            name,
+            varificationToken: randomBytes(32).toString('hex')
         })
         newUser = await this.usersRepository.save(newUser)
-
         const payload = { id: newUser.id, userType: newUser.userType };
         const token = await this.jwtservices.signAsync(payload);
+        const link = `http://localhost:3001/api/users/verify-email/${newUser.varificationToken}`;
         try {
             await this.mailService.sendMail({
                 to: newUser.email,
                 from: '"My Store" <no-reply@yourdomain.com>',
-                subject: 'Register',
-                html: `<div><h2>Hi ${newUser.name}</h2></div>`
+                subject: 'Welcom',
+                template: 'register',
+                context: {
+                    link
+                }
+
             })
         } catch (error) {
             console.log(error);
             throw new RequestTimeoutException();
         }
         return { message: "user created successfully", accessToken: token, user: newUser }
+    }
+
+    public async emailVarification(token: string) {
+        const user = await this.usersRepository.findOne({
+            where: { varificationToken: token }
+        })
+        if (!user) { throw new NotFoundException("user not found") }
+        if (user.varificationToken !== token) { throw new BadRequestException("invalid token") }
+        user.isAccountVerified = true;
+        user.varificationToken = null;
+        const email = user.email
+        await this.usersRepository.save(user);
+        const userName = user.username
+        try {
+            await this.mailService.sendMail({
+                to: email,
+                from: '"My Store" <no-reply@yourdomain.com>',
+                subject: 'vrifcation',
+                template: 'verify-email',
+                context: {
+                    userName
+                }
+            })
+        } catch (error) {
+            console.log(error);
+            throw new RequestTimeoutException();
+        }
     }
 
     public async login(loginDto: LoginDto) {

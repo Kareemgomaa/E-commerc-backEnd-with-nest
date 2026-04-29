@@ -28,6 +28,13 @@ export class UsersController {
         return this.authServices.register(body)
     }
 
+    @Post("verify-email/:varificationToken")
+    public async emailVarification(@Param('varificationToken') varificationToken: string) {
+        return this.authServices.emailVarification(varificationToken)
+    }
+
+
+
     @Post("auth/login") // غيرها من Get لـ Post
     public login(@Body() body: LoginDto) {
         return this.authServices.login(body)

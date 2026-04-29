@@ -3,6 +3,9 @@ import { Module } from '@nestjs/common';
 // import { MailService } from './mail.service';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
+import { join } from 'path';
+import { EjsAdapter } from '@nestjs-modules/mailer/adapters/ejs.adapter';
+
 
 @Module({
   // controllers: [MailController],
@@ -23,7 +26,13 @@ import { ConfigService } from '@nestjs/config';
             tls: {
               rejectUnauthorized: false // أحياناً يكون ضرورياً إذا كان هناك مشكلة في شهادات الـ SSL
             },
-          }
+          },
+          template: {
+            dir: join(__dirname, 'template'),
+            adapter: new EjsAdapter({
+              inlineCssEnabled: true
+            }),
+          },
         }
       }
     })
@@ -31,4 +40,3 @@ import { ConfigService } from '@nestjs/config';
   exports: [MailerModule, /**MailService*/]
 })
 export class MailModule { }
-

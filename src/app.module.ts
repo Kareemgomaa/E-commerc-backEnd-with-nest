@@ -37,7 +37,6 @@ import { MailModule } from './mail/mail.module';
           database: config.get<string>('DB_DATABASE'),
           entities: [Product, User, Review],
           synchronize: true,
-          // ✅ SSL دايماً شغال في production بغض النظر عن أي env variable
           ssl: isProduction ? { rejectUnauthorized: false } : false,
         };
       },
