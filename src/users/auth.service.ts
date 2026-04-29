@@ -16,9 +16,8 @@ export class AuthServices {
         @InjectRepository(User)
         private readonly usersRepository: Repository<User>,
         private readonly jwtservices: JwtService,
-        private readonly configService: ConfigService,
         private readonly mailService: MailerService,
-        private readonly config: ConfigService
+        private readonly configService: ConfigService
     ) { }
 
     public async register(registerDto: RegisterDto) {
@@ -40,24 +39,25 @@ export class AuthServices {
         newUser = await this.usersRepository.save(newUser)
         const payload = { id: newUser.id, userType: newUser.userType };
         const token = await this.jwtservices.signAsync(payload);
+
+        // استخدام رابط ديناميكي بناءً على بيئة التشغيل
         const baseUrl = this.configService.get<string>('BASE_URL') || 'http://localhost:3001';
         const link = `${baseUrl}/api/users/verify-email/${newUser.varificationToken}`;
-        try {
-            await this.mailService.sendMail({
-                to: newUser.email,
-                from: '"My Store" <no-reply@yourdomain.com>',
-                subject: 'Welcom',
-                template: 'register',
-                context: {
-                    link
-                }
 
-            })
-        } catch (mailError) {
-            // نسجل الخطأ في الـ Logs لنعرف السبب الحقيقي (Authentication failure, Port blocked, etc.)
-            console.error('Mail sending failed:', mailError);
-            // يفضل هنا عدم رمي Exception إذا أردت أن يكمل المستخدم عملية التسجيل بالرغم من فشل الإيميل
-        }
+        // إرسال الإيميل بدون await حتى لا ينتظر الـ API رد سيرفر الإيميل
+        this.mailService.sendMail({
+            to: newUser.email,
+            from: '"My Store" <no-reply@yourdomain.com>',
+            subject: 'Welcom',
+            template: 'register',
+            context: {
+                link
+            }
+        }).catch(mailError => {
+            // نسجل الخطأ فقط في السجلات دون تعطيل عملية التسجيل
+            console.error('Background Mail sending failed:', mailError);
+        });
+
         return { message: "user created successfully", accessToken: token, user: newUser }
     }
 
@@ -72,20 +72,21 @@ export class AuthServices {
         const email = user.email
         await this.usersRepository.save(user);
         const userName = user.username
-        try {
-            await this.mailService.sendMail({
-                to: email,
-                from: '"My Store" <no-reply@yourdomain.com>',
-                subject: 'vrifcation',
-                template: 'verify-email',
-                context: {
-                    userName
-                }
-            })
-        } catch (error) {
-            console.log(error);
-            throw new RequestTimeoutException();
-        }
+
+        // إرسال إيميل التأكيد أيضاً في الخلفية
+        this.mailService.sendMail({
+            to: email,
+            from: '"My Store" <no-reply@yourdomain.com>',
+            subject: 'vrifcation',
+            template: 'verify-email',
+            context: {
+                userName
+            }
+        }).catch(err => {
+            console.error('Verification success mail failed:', err);
+        });
+
+        return { message: "Email verified successfully" };
     }
 
     public async login(loginDto: LoginDto) {
