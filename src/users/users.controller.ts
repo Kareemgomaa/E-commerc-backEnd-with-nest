@@ -99,7 +99,7 @@ export class UsersController {
         return this.usersService.removeImage(request.user.id)
     }
 
-    @Get('send-password-otp')
+    @Get('/send-password-otp')
     @UseGuards(AuthGuard)
     public sendResetPasswordOTP(@Req() request: any) {
         return this.authServices.sendResetPasswordOTP(request.user.id)
