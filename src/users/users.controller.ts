@@ -105,7 +105,7 @@ export class UsersController {
         return this.authServices.sendResetPasswordOTP(request.user.id)
     }
 
-    @Patch('reset-password/:id')
+    @Patch('/reset-password/:id')
     @UseGuards(AuthRolesGuard)
     @Roles('admin', 'user')
     public async resetPassword(@Param('id') id: number, @Body('password') password: string) {
