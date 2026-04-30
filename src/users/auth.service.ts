@@ -102,7 +102,7 @@ export class AuthServices {
         if (!user) { throw new NotFoundException("user not found") }
 
         const baseUrl = this.configService.get<string>('BASE_URL') || 'http://localhost:3001';
-        const link = `${baseUrl}/api/users/reset-password-link/${user.id}`;
+        const link = `${baseUrl}/api/users/reset-password/${user.id}`;
 
         await this.mailService.sendMail({
             to: user.email,
