@@ -36,6 +36,7 @@ export class AuthServices {
             name,
             varificationToken: randomBytes(32).toString('hex')
         })
+
         newUser = await this.usersRepository.save(newUser)
         const payload = { id: newUser.id, userType: newUser.userType };
         const token = await this.jwtservices.signAsync(payload);
