@@ -43,6 +43,7 @@ import { MailModule } from './mail/mail.module';
     }),
     MailModule,
   ],
+
   providers: [
     {
       provide: 'APP_INTERCEPTOR',

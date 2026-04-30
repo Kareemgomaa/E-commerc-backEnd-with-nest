@@ -1,7 +1,7 @@
 /// <reference types="multer" />
 import { updateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
-import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Post, Put, Req, Res, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Put, Req, Res, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { RegisterDto } from "./dto/create-user.dto";
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from './guards/auth.guard';
@@ -35,7 +35,7 @@ export class UsersController {
 
 
 
-    @Post("auth/login") // غيرها من Get لـ Post
+    @Post("auth/login")
     public login(@Body() body: LoginDto) {
         return this.authServices.login(body)
     }
@@ -43,8 +43,6 @@ export class UsersController {
     @Get("current-user")
     @UseGuards(AuthGuard)
     public getCurrentUser(@Req() request: any) {
-        console.log('enter rout ');
-
         return this.usersService.getCurrentUser(request.user.id)
     }
 
@@ -84,7 +82,6 @@ export class UsersController {
     async uploadImage(@Req() request: any, @UploadedFile() file: Express.Multer.File) {
         if (!file) throw new BadRequestException('No file to upload');
 
-        // رفع على cloudinary
         const result = await new Promise((resolve, reject) => {
             const upload = cloudinary.uploader.upload_stream(
                 { folder: 'users' },
@@ -101,4 +98,18 @@ export class UsersController {
     public removeImage(@Req() request: any) {
         return this.usersService.removeImage(request.user.id)
     }
+
+    @Get('send-password-otp')
+    @UseGuards(AuthGuard)
+    public sendResetPasswordOTP(@Req() request: any) {
+        return this.authServices.sendResetPasswordOTP(request.user.id)
+    }
+
+    @Patch('reset-password/:id')
+    @UseGuards(AuthRolesGuard)
+    @Roles('admin', 'user')
+    public async resetPassword(@Param('id') id: number, @Body('password') password: string) {
+        return this.authServices.resetPassword(id, password)
+    }
+
 }

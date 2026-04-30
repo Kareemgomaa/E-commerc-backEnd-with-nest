@@ -36,7 +36,6 @@ export class AuthRolesGuard implements CanActivate {
         if (authHeader.startsWith('Bearer ')) {
             token = authHeader.substring(7);
         } else {
-            // fallback لو الـ proxy حذف كلمة Bearer
             token = authHeader;
         }
 
@@ -44,26 +43,25 @@ export class AuthRolesGuard implements CanActivate {
             throw new UnauthorizedException('No token provided');
         }
 
+        let payload: any;
         try {
             const secret = this.configService.get<string>('JWT_SECRET');
-            const payload = await this.jwtService.verifyAsync(token, { secret });
-
-            const user = await this.usersService.getCurrentUser(payload.id);
-            if (!user) {
-                throw new UnauthorizedException('User not found');
-            }
-
-            request['user'] = user;
-
-            // لو مفيش roles محددة، أي user authenticated يعدي
-            if (!roles || roles.length === 0) {
-                return true;
-            }
-
-            return roles.includes(user.userType);
+            payload = await this.jwtService.verifyAsync(token, { secret });
         } catch (error) {
-            console.error('AuthRolesGuard error:', error);
             throw new UnauthorizedException('Invalid or expired token');
         }
+
+        const user = await this.usersService.getCurrentUser(payload.id);
+        if (!user) {
+            throw new UnauthorizedException('User not found');
+        }
+
+        request['user'] = user;
+
+        if (!roles || roles.length === 0) {
+            return true;
+        }
+
+        return roles.includes(user.userType);
     }
 }

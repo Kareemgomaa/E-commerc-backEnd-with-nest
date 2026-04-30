@@ -12,7 +12,7 @@ export class AuthGuard implements CanActivate {
         private usersService: UsersService
     ) { }
 
-    async canActivate(context: ExecutionContext) {
+    async canActivate(context: ExecutionContext): Promise<boolean> {
         const request: Request = context.switchToHttp().getRequest();
 
         const authHeader =
@@ -24,12 +24,10 @@ export class AuthGuard implements CanActivate {
             throw new UnauthorizedException('Authorization header is missing');
         }
 
-        let token: string | undefined;
-
+        let token: string;
         if (authHeader.startsWith('Bearer ')) {
             token = authHeader.substring(7);
         } else {
-            // fallback لو الـ proxy حذف كلمة Bearer
             token = authHeader;
         }
 
@@ -38,12 +36,20 @@ export class AuthGuard implements CanActivate {
         }
 
         try {
-            const secret = this.configService.get<string>('JWT_SECRET');
-            Logger.log(`AuthGuard JWT_SECRET: ${secret ? 'SET' : 'NOT SET'}`, 'AuthGuard');
-            const payload = await this.jwtService.verifyAsync(token, { secret });
-            request['user'] = payload;
+            const payload = await this.jwtService.verifyAsync(token);
+            console.log('User ID from Token:', payload.id);
+            const user = await this.usersService.getCurrentUser(payload.id);
+            if (!user) {
+                throw new UnauthorizedException('User not found or account deleted');
+            }
+
+            request['user'] = user;
+
             return true;
-        } catch {
+        } catch (error) {
+            console.log(error);
+
+            Logger.error(`JWT Verification Error: `, 'AuthGuard');
             throw new UnauthorizedException('Invalid or expired token');
         }
     }
