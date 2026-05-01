@@ -75,7 +75,6 @@ export class UsersService {
         const user = await this.getCurrentUser(userId);
 
         if (user.profileImage) {
-            // حذف الصورة القديمة إذا كانت محلية
             if (!user.profileImage.startsWith('http')) {
                 const imagePath = join(process.cwd(), `./images/users/${user.profileImage}`);
                 if (existsSync(imagePath)) unlinkSync(imagePath);
@@ -93,7 +92,6 @@ export class UsersService {
         if (!user) { throw new NotFoundException("user not found") }
         if (user.profileImage === null) { throw new BadRequestException("no image to remove") }
 
-        // التحقق ما إذا كانت الصورة مخزنة محلياً قبل محاولة حذفها
         if (!user.profileImage.startsWith('http')) {
             const imagePath = join(process.cwd(), `./images/users/${user.profileImage}`);
             if (existsSync(imagePath)) {

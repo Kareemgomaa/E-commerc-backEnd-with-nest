@@ -24,7 +24,7 @@ import { EjsAdapter } from '@nestjs-modules/mailer/adapters/ejs.adapter';
               pass: config.get<string>('SMTP_PASSWORD')
             },
             tls: {
-              rejectUnauthorized: false // أحياناً يكون ضرورياً إذا كان هناك مشكلة في شهادات الـ SSL
+              rejectUnauthorized: false
             },
           },
           template: {
